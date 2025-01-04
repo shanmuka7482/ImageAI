@@ -65,9 +65,9 @@ const Sidebar = () => {
           </svg>
           <h5
             id="drawer-navigation-label"
-            className="text-base font-semibold text-white uppercase"
+            className="text-base font-semibold text-white"
           >
-            AltGen
+            ImageAI
           </h5>
         </div>
 

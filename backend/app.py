@@ -13,6 +13,8 @@ from langchain_openai import OpenAI
 from langchain_core.output_parsers import StrOutputParser
 from PIL import Image,ImageDraw
 from langchain_google_genai import GoogleGenerativeAI
+from huggingface_hub import InferenceClient
+from io import BytesIO
 
 # Load environment variables
 load_dotenv()
@@ -65,20 +67,48 @@ def alt_text_extension(alt_text:str):
         return f"Error in Extension: {str(e)}"
 
 
-def Mask_Image(image_loc):
-    image = Image.open(image_loc)
-    mask = Image.new("RGB",image.size,(0,0,0))
+def text_to_Image(image_path: str):
+    client = InferenceClient(api_key=os.getenv("HUGGINGFACEHUB_API_TOKEN"))
+    
+        # Load the image
+    image = Image.open(image_path)
+    buffered = BytesIO()
+    image.save(buffered, format="JPEG")
+    img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Describe this image and be as detaled as possible"
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
+                    }
+                    }
+                
+            ]
+        }
+    ]
 
-    draw = ImageDraw.Draw(mask)
-    draw.rectangle((50, 50, 150, 150), fill=(255, 255, 255))
-    mask.save("mask.png")
+    completion = client.chat.completions.create(
+        model="Qwen/Qwen2-VL-2B-Instruct", 
+        messages=messages, 
+        max_tokens=500
+    )
+
+    print(completion.choices[0].message)
+    return completion.choices[0].message
 
 
 @app.get("/")
 def hello():
     return {"Message": "Hello"}
 
-@app.post("/upload")
+@app.post("/alt-Generate")
 async def upload_img(file_data: FileData):
     try:
         # Decode the Base64 string
@@ -92,5 +122,20 @@ async def upload_img(file_data: FileData):
         extended_text = alt_text_extension(response)
         # Mask_Image(temp_file_path)
         return {"Message": "Uploaded Successfully", "File_Path": temp_file_path, "Output": response,"Extended_text":extended_text}
+    except Exception as e:
+        return {"error": "Failed to process the request.", "details": str(e)}
+    
+@app.post("/Image-Generate")
+async def upload_img(file_data: FileData):
+    try:
+        # Decode the Base64 string
+        img_data = base64.b64decode(file_data.basestring)
+        with NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
+            temp_file.write(img_data)
+            temp_file_path = temp_file.name
+
+        text = text_to_Image(temp_file_path)
+        # Mask_Image(temp_file_path)
+        return {"Message": "Uploaded Successfully", "File_Path": temp_file_path, "Output": text}
     except Exception as e:
         return {"error": "Failed to process the request.", "details": str(e)}
