@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const Sidebar = () => {
-  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [isAPIVisible, setAPIVisible] = useState(false);
   const [isModelVisible, setModelVisible] = useState(false);
   const [apiKey, setApiKey] = useState('');
@@ -131,7 +131,7 @@ const Sidebar = () => {
             </li>
 
             {/* Model Name Input */}
-            <li>
+            {/* <li>
               <a
                 href="#"
                 className="flex items-center p-2 rounded-lg text-white group"
@@ -162,7 +162,7 @@ const Sidebar = () => {
                 onChange={(e) => setModelName(e.target.value)}
                 required
               />
-            </li>
+            </li> */}
           </ul>
 
           {/* Save Button */}

@@ -1,40 +1,28 @@
-# from huggingface_hub import InferenceClient
-# from PIL import Image
-# client = InferenceClient("stabilityai/stable-diffusion-xl-base-1.0", token="")
-
-# # output is a PIL.Image object
-# image = client.text_to_image("can you geberate a tonnify avatar based on this description It appears to be a photograph of a macaw with its wings spread, possibly in flight or about to take off.  The macaw is in the center of the image, with its wings spread wide, and it is facing towards the left side of the frame. It has a vibrant blue and yellow plumage, with a long tail and sharp beak. The background is blurry, but it appears to be a forest or jungle, with green trees and foliage visible in the distance.")
-
-# image.save("output_image.png", format="PNG")
-
+from huggingface_hub import InferenceClient
+from PIL import Image
+from io import BytesIO
 import base64
-from openai import OpenAI
+import os
+def image_creation(alt_text):
+    client = InferenceClient("stabilityai/stable-diffusion-xl-base-1.0", token=os.environ.get('HUGGINGFACEHUB_API_TOKEN'))
 
-client = OpenAI(
-    base_url="https://api-inference.huggingface.co/v1/",
-    api_key=""
-)
+    image = client.text_to_image(f"can you generate a tonnify avatar based on this description {alt_text}")
+    print(f"Type of image: {type(image)}")
 
-# Read and encode the local image
-image_path = "D:\Preap\Internship\infosys\Project-3\Test\Ara_ararauna_Luc_Viatour.jpg"
-with open(image_path, "rb") as image_file:
-    encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+    image_format = "JPEG"  # Ensure format is a string, e.g., "JPEG" or "PNG"
 
-# Prepare the message with the encoded image
-messages = [
-    {
-        "role": "user",
-        "content": "Describe this image in one sentence.",
-        "image_data": encoded_image  # Assuming the API expects this key
-    }
-]
+    # Create a buffer to save the image into memory
+    buffer = BytesIO()
 
-# Make the API call
-completion = client.chat.completions.create(
-    model="Qwen/Qwen2-VL-7B-Instruct",
-    messages=messages,
-    max_tokens=300
-)
+    # Save the image into the buffer
+    image.save(buffer, format=image_format)
 
-print(completion.choices[0])
+    # Move to the beginning of the buffer
+    buffer.seek(0)
 
+    # Convert the image data to Base64 encoding
+    base64_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    return base64_str
+
+print(image_creation("The image shows a blue and gold macaw soaring through the air with its wings spread wide, its feathers glistening in the sunlight. The background is filled with lush green trees, providing a beautiful contrast to the vibrant colors of the bird."))

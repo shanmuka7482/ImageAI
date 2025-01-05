@@ -15,6 +15,9 @@ from PIL import Image,ImageDraw
 from langchain_google_genai import GoogleGenerativeAI
 from huggingface_hub import InferenceClient
 from io import BytesIO
+import torch
+from PIL import Image
+from transformers import AutoProcessor, AutoModelForCausalLM 
 
 # Load environment variables
 load_dotenv()
@@ -55,54 +58,55 @@ def image_captioning_tool(image_path: str, apiKey: str, modelName: str) -> str:
     except Exception as e:
         return f"Error processing image: {str(e)}"
 
-def alt_text_extension(alt_text:str):
-    try:
-        # initializing model
-        llm = GoogleGenerativeAI(model="gemini-pro")
-        template = "Expand the following alt text into a short, 2-3 line visual description. Focus on the main elements and overall scene. Keep it concise and easy to picture. Input:  {topic}"
-        extension_prompt = PromptTemplate(input_variables=[type],template=template)
-        chain = extension_prompt | llm | StrOutputParser()
-        return chain.invoke(alt_text)
-    except Exception as e:
-        return f"Error in Extension: {str(e)}"
-
-
-def text_to_Image(image_path: str):
-    client = InferenceClient(api_key=os.getenv("HUGGINGFACEHUB_API_TOKEN"))
+def alt_text_extended(task_prompt,image_loc,text_input=None):
     
-        # Load the image
-    image = Image.open(image_path)
-    buffered = BytesIO()
-    image.save(buffered, format="JPEG")
-    img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "Describe this image and be as detaled as possible"
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": "https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg"
-                    }
-                    }
-                
-            ]
-        }
-    ]
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
-    completion = client.chat.completions.create(
-        model="Qwen/Qwen2-VL-2B-Instruct", 
-        messages=messages, 
-        max_tokens=500
+    model = AutoModelForCausalLM.from_pretrained("microsoft/Florence-2-large", torch_dtype=torch_dtype, trust_remote_code=True).to(device)
+    processor = AutoProcessor.from_pretrained("microsoft/Florence-2-large", trust_remote_code=True)
+
+    image = Image.open(image_loc)
+    if text_input is None:
+        prompt = task_prompt
+    else:
+        prompt = task_prompt + text_input
+    inputs = processor(text=prompt, images=image, return_tensors="pt").to(device, torch_dtype)
+    generated_ids = model.generate(
+      input_ids=inputs["input_ids"],
+      pixel_values=inputs["pixel_values"],
+      max_new_tokens=1024,
+      num_beams=3
     )
+    generated_text = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
 
-    print(completion.choices[0].message)
-    return completion.choices[0].message
+    parsed_answer = processor.post_process_generation(generated_text, task=task_prompt, image_size=(image.width, image.height))
+    return parsed_answer[prompt]
 
+def image_creation(alt_text):
+    try:
+        client = InferenceClient("stabilityai/stable-diffusion-xl-base-1.0", token=os.environ.get('HUGGINGFACEHUB_API_TOKEN'))
+
+        # output is a PIL.Image object
+        image = client.text_to_image(f"can you generate a tonnify avatar based on this description {alt_text}")
+
+        image_format = "JPEG"  # Ensure format is a string, e.g., "JPEG" or "PNG"
+
+        # Create a buffer to save the image into memory
+        buffer = BytesIO()
+
+        # Save the image into the buffer
+        image.save(buffer, format=image_format)
+
+        # Move to the beginning of the buffer
+        buffer.seek(0)
+
+        # Convert the image data to Base64 encoding
+        base64_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+        return base64_str
+    except Exception as e:
+        return {"error": "Failed to process the request.", "details": str(e)}
 
 @app.get("/")
 def hello():
@@ -119,11 +123,15 @@ async def upload_img(file_data: FileData):
 
         # Call the image captioning tool
         response = image_captioning_tool(temp_file_path, file_data.apiKey, file_data.modelName)
-        extended_text = alt_text_extension(response)
+        extended_text = alt_text_extended("<DETAILED_CAPTION>",temp_file_path)
         # Mask_Image(temp_file_path)
         return {"Message": "Uploaded Successfully", "File_Path": temp_file_path, "Output": response,"Extended_text":extended_text}
     except Exception as e:
         return {"error": "Failed to process the request.", "details": str(e)}
+    finally:
+        # Delete the temporary file after use
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
     
 @app.post("/Image-Generate")
 async def upload_img(file_data: FileData):
@@ -134,8 +142,13 @@ async def upload_img(file_data: FileData):
             temp_file.write(img_data)
             temp_file_path = temp_file.name
 
-        text = text_to_Image(temp_file_path)
+        text = alt_text_extended("<DETAILED_CAPTION>",temp_file_path)
+        image = image_creation(text)
         # Mask_Image(temp_file_path)
-        return {"Message": "Uploaded Successfully", "File_Path": temp_file_path, "Output": text}
+        return {"Message": "Uploaded Successfully", "Text": text, "Output": image}
     except Exception as e:
         return {"error": "Failed to process the request.", "details": str(e)}
+    finally:
+        # Delete the temporary file after use
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
