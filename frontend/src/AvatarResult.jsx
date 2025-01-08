@@ -137,7 +137,6 @@ const GeneratedAvatar = () => {
                       src={`data:image/jpeg;base64,${apiResponse.Output}`}
                       alt="Original image"
                     />
-                    {console.log(apiResponse.Output)}
                   </>
                 ) : (
                   <>
@@ -177,6 +176,7 @@ const GeneratedAvatar = () => {
 
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-500">Style: Cartoon</span>
+            <span className="text-lg font-bold text-gray-500">{apiResponse ? (<>Time Taken: {apiResponse.Time_Taken}</>):(<></>)}</span>
             <button className = {` bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md `}
             onClick={handleDownload}
             disabled= {isdisabled}>

@@ -18,6 +18,7 @@ from io import BytesIO
 import torch
 from PIL import Image
 from transformers import AutoProcessor, AutoModelForCausalLM 
+import time
 
 # Load environment variables
 load_dotenv()
@@ -141,11 +142,13 @@ async def upload_img(file_data: FileData):
         with NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
             temp_file.write(img_data)
             temp_file_path = temp_file.name
-
+        start_time = time.time()
         text = alt_text_extended("<DETAILED_CAPTION>",temp_file_path)
         image = image_creation(text)
+        end_time = time.time()
         # Mask_Image(temp_file_path)
-        return {"Message": "Uploaded Successfully", "Text": text, "Output": image}
+        time_taken = end_time - start_time
+        return {"Message": "Uploaded Successfully", "Text": text, "Output": image,"Time_Taken":'%.2f' %time_taken}
     except Exception as e:
         return {"error": "Failed to process the request.", "details": str(e)}
     finally:

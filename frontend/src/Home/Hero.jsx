@@ -91,7 +91,7 @@ const GenerateAltText = () => {
                 <img
                   src={`data:${selectedFile.type};base64,${basestring}`}
                   alt="data"
-                  className="w-64 h-64"
+                  className="h-64"
                 />
 
                 <button
