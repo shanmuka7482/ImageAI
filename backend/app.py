@@ -88,21 +88,16 @@ def image_creation(alt_text):
     try:
         client = InferenceClient("stabilityai/stable-diffusion-xl-base-1.0", token=os.environ.get('HUGGINGFACEHUB_API_TOKEN'))
 
-        # output is a PIL.Image object
         image = client.text_to_image(f"can you generate a tonnify avatar based on this description {alt_text}")
 
-        image_format = "JPEG"  # Ensure format is a string, e.g., "JPEG" or "PNG"
+        image_format = "JPEG"
 
-        # Create a buffer to save the image into memory
         buffer = BytesIO()
 
-        # Save the image into the buffer
         image.save(buffer, format=image_format)
 
-        # Move to the beginning of the buffer
         buffer.seek(0)
 
-        # Convert the image data to Base64 encoding
         base64_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
         return base64_str
@@ -116,28 +111,23 @@ def hello():
 @app.post("/alt-Generate")
 async def upload_img(file_data: FileData):
     try:
-        # Decode the Base64 string
         img_data = base64.b64decode(file_data.basestring)
         with NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
             temp_file.write(img_data)
             temp_file_path = temp_file.name
 
-        # Call the image captioning tool
         response = image_captioning_tool(temp_file_path, file_data.apiKey, file_data.modelName)
         extended_text = alt_text_extended("<DETAILED_CAPTION>",temp_file_path)
-        # Mask_Image(temp_file_path)
         return {"Message": "Uploaded Successfully", "File_Path": temp_file_path, "Output": response,"Extended_text":extended_text}
     except Exception as e:
         return {"error": "Failed to process the request.", "details": str(e)}
     finally:
-        # Delete the temporary file after use
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
     
 @app.post("/Image-Generate")
 async def upload_img(file_data: FileData):
     try:
-        # Decode the Base64 string
         img_data = base64.b64decode(file_data.basestring)
         with NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
             temp_file.write(img_data)
@@ -146,7 +136,6 @@ async def upload_img(file_data: FileData):
         text = alt_text_extended("<DETAILED_CAPTION>",temp_file_path)
         image = image_creation(text)
         end_time = time.time()
-        # Mask_Image(temp_file_path)
         time_taken = end_time - start_time
         return {"Message": "Uploaded Successfully", "Text": text, "Output": image,"Time_Taken":'%.2f' %time_taken}
     except Exception as e:
