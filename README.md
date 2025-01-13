@@ -86,4 +86,4 @@ npm start
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/shanmuka7482/ImageAI?tab=MIT-1-ov-file#readme) file for details.
