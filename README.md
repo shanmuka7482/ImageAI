@@ -18,7 +18,7 @@ ImageAI is a powerful application that generates alternative text for images or 
 
 - Framework: React
 
-- Styling: CSS/SCSS, TailwindCSS 
+- Styling: TailwindCSS 
 
 ### Backend
 
@@ -31,8 +31,6 @@ ImageAI is a powerful application that generates alternative text for images or 
 ## Setup Instructions
 
 ### Prerequisites
-
-- Node.js (v14 or later)
 
 - Python (v3.8 or later)
 
