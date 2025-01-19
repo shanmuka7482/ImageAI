@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const Sidebar = () => {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [isAPIVisible, setAPIVisible] = useState(false);
-  const [isModelVisible, setModelVisible] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [modelName, setModelName] = useState('microsoft/git-base');
+  const [apiKey, setApiKey] = useState("");
 
   const toggleSidebar = () => {
     setSidebarVisible(!isSidebarVisible);
@@ -15,20 +13,17 @@ const Sidebar = () => {
     setAPIVisible(!isAPIVisible);
   };
 
-  const toggleModelName = () => {
-    setModelVisible(!isModelVisible);
-  };
-
   const saveCred = () => {
-    if (!apiKey || !modelName) {
-      alert('Enter all Values');
+    if (!apiKey) {
+      alert("Enter Api Key");
       return;
     }
-    
-    sessionStorage.setItem('apiKey', apiKey);
-    sessionStorage.setItem('modelName', modelName);
-    alert('Credentials saved successfully!');
+
+    sessionStorage.setItem("apiKey", apiKey);
+    alert("Credentials saved successfully!");
   };
+
+
 
   return (
     <div className="bg-zinc-900 pt-2 pl-2 absolute">
@@ -46,7 +41,7 @@ const Sidebar = () => {
       <div
         id="drawer-navigation"
         className={`fixed top-0 left-0 z-40 w-64 h-screen p-4 overflow-y-auto transition-transform bg-[#262626] ${
-          isSidebarVisible ? 'translate-x-0' : '-translate-x-full'
+          isSidebarVisible ? "translate-x-0" : "-translate-x-full"
         } background`}
         tabIndex="1"
         aria-labelledby="drawer-navigation-label"
@@ -105,7 +100,7 @@ const Sidebar = () => {
               >
                 <svg
                   className={`w-5 h-5 transition duration-75 text-gray-400 group-hover:text-emerald-500 ${
-                    isAPIVisible ? 'text-emerald-500' : ''
+                    isAPIVisible ? "text-emerald-500" : ""
                   }`}
                   width="1em"
                   height="1em"
@@ -121,7 +116,7 @@ const Sidebar = () => {
               <input
                 type="text"
                 className={`border text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white ${
-                  isAPIVisible ? '' : 'hidden'
+                  isAPIVisible ? "" : "hidden"
                 }`}
                 placeholder="Your HuggingFace API Key..."
                 value={apiKey}
@@ -129,40 +124,6 @@ const Sidebar = () => {
                 required
               />
             </li>
-
-            {/* Model Name Input */}
-            {/* <li>
-              <a
-                href="#"
-                className="flex items-center p-2 rounded-lg text-white group"
-                onClick={toggleModelName}
-              >
-                <svg
-                  className={`w-5 h-5 transition duration-75 text-gray-400 group-hover:text-emerald-500 ${
-                    isModelVisible ? 'text-emerald-500' : ''
-                  }`}
-                  width="1em"
-                  height="1em"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M19.375 8.5a3.25 3.25 0 1 1-3.163 4h-3a3.252 3.252 0 0 1-4.443 2.509L7.214 17.76a3.25 3.25 0 1 1-1.342-.674l1.672-2.957A3.238 3.238 0 0 1 6.75 12c0-.907.371-1.727.97-2.316L6.117 6.846A3.253 3.253 0 0 1 1.875 3.75a3.25 3.25 0 1 1 5.526 2.32l1.603 2.836A3.25 3.25 0 0 1 13.093 11h3.119a3.252 3.252 0 0 1 3.163-2.5zM10 10.25a1.75 1.75 0 1 0-.001 3.499A1.75 1.75 0 0 0 10 10.25zM5.125 2a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5zm12.5 9.75a1.75 1.75 0 1 0 3.5 0 1.75 1.75 0 0 0-3.5 0zm-14.25 8.5a1.75 1.75 0 1 0 3.501-.001 1.75 1.75 0 0 0-3.501.001z" />
-                </svg>
-                <span className="ms-3 text-gray-400 group-hover:text-emerald-500">
-                  Model Name
-                </span>
-              </a>
-              <input
-                type="text"
-                className={`border text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white ${
-                  isModelVisible ? '' : 'hidden'
-                }`}
-                placeholder="Your Model Name"
-                value={modelName}
-                onChange={(e) => setModelName(e.target.value)}
-                required
-              />
-            </li> */}
           </ul>
 
           {/* Save Button */}

@@ -20,8 +20,6 @@ from PIL import Image
 from transformers import AutoProcessor, AutoModelForCausalLM 
 import time
 
-# Load environment variables
-load_dotenv()
 
 app = FastAPI()
 
@@ -37,19 +35,18 @@ app.add_middleware(
 # Data Model
 class FileData(BaseModel):
     basestring: str  # Base64-encoded string
-    apiKey: Optional[str] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
-    modelName: Optional[str] = "microsoft/git-base"
+    apiKey: str
 
 # Image Captioning Function
-def image_captioning_tool(image_path: str, apiKey: str, modelName: str) -> str:
+def image_captioning_tool(image_path: str, apiKey: str) -> str:
     try:
         # Load the image
         image = Image.open(image_path)
-
+        os.environ["HUGGINGFACEHUB_API_TOKEN"] = apiKey
         # Initialize the image captioning pipeline
         caption_pipeline = pipeline(
             "image-to-text",
-            model=modelName,
+            model="microsoft/git-base",
             max_new_tokens=50,
         )
 
@@ -88,13 +85,17 @@ def image_creation(alt_text):
     try:
         client = InferenceClient("stabilityai/stable-diffusion-xl-base-1.0", token=os.environ.get('HUGGINGFACEHUB_API_TOKEN'))
 
-        image = client.text_to_image(f"can you generate a tonnify avatar based on this description {alt_text}")
+        image = client.text_to_image(f"Create a fully toonified avatar in a hand-drawn, animated sketch style. It should be colorful, playful, and ideal for a WhatsApp profile picture. Base the design on the following description: {alt_text}.")
 
         image_format = "JPEG"
 
         buffer = BytesIO()
+        # Ensure the image is in RGB mode
+        if image.mode != "RGB":
+            image = image.convert("RGB")
 
         image.save(buffer, format=image_format)
+
 
         buffer.seek(0)
 
@@ -106,17 +107,19 @@ def image_creation(alt_text):
 
 @app.get("/")
 def hello():
-    return {"Message": "Hello"}
+    return {"Message": "Hello from ImageAI"}
 
 @app.post("/alt-Generate")
 async def upload_img(file_data: FileData):
     try:
+        
+        os.environ["HUGGINGFACEHUB_API_TOKEN"] = file_data.apiKey
         img_data = base64.b64decode(file_data.basestring)
         with NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
             temp_file.write(img_data)
             temp_file_path = temp_file.name
 
-        response = image_captioning_tool(temp_file_path, file_data.apiKey, file_data.modelName)
+        response = image_captioning_tool(temp_file_path, file_data.apiKey)
         extended_text = alt_text_extended("<DETAILED_CAPTION>",temp_file_path)
         return {"Message": "Uploaded Successfully", "File_Path": temp_file_path, "Output": response,"Extended_text":extended_text}
     except Exception as e:
@@ -128,6 +131,8 @@ async def upload_img(file_data: FileData):
 @app.post("/Image-Generate")
 async def upload_img(file_data: FileData):
     try:
+        
+        os.environ["HUGGINGFACEHUB_API_TOKEN"] = file_data.apiKey
         img_data = base64.b64decode(file_data.basestring)
         with NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
             temp_file.write(img_data)

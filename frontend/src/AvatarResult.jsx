@@ -44,13 +44,11 @@ const GeneratedAvatar = () => {
 
           // Retrieve values from session storage
           const apiKey = sessionStorage.getItem("apiKey");
-          const modelName = sessionStorage.getItem("modelName");
 
           // Construct request body
           const requestBody = {
             basestring,
             ...(apiKey && { apiKey }),
-            ...(modelName && { modelName }),
           };
 
           // API request
@@ -135,7 +133,7 @@ const GeneratedAvatar = () => {
                   <>
                     <img
                       src={`data:image/jpeg;base64,${apiResponse.Output}`}
-                      alt="Original image"
+                      alt="Generated image"
                     />
                   </>
                 ) : (

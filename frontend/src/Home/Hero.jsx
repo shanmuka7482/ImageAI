@@ -31,25 +31,28 @@ const GenerateAltText = () => {
   };
 
   const handleContinue = () => {
-    if (selectedFile && basestring) {
-      if (selectedOption == "alt-text") {
-        navigate("/alt-result", {
-          state: {
-            selectedFile,
-            basestring,
-          },
-        });
-      }
-      else{
-        navigate("/Avatar-result", {
-          state: {
-            selectedFile,
-            basestring,
-          },
-        });
-      }
+    if (!sessionStorage.getItem("apiKey")) {
+      alert("Enter The API Key");
     } else {
-      alert("Please upload a file before continuing.");
+      if (selectedFile && basestring) {
+        if (selectedOption === "alt-text") {
+          navigate("/alt-result", {
+            state: {
+              selectedFile,
+              basestring,
+            },
+          });
+        } else {
+          navigate("/Avatar-result", {
+            state: {
+              selectedFile,
+              basestring,
+            },
+          });
+        }
+      } else {
+        alert("Please upload a file before continuing.");
+      }
     }
   };
 
@@ -65,9 +68,7 @@ const GenerateAltText = () => {
   return (
     <div className="flex items-center justify-center h-screen bg-zinc-900">
       <div className="bg-zinc-900 rounded-lg p-10 text-center w-7/12">
-        <h1 className="text-white text-5xl font-semibold mb-12">
-        ImageAI
-        </h1>
+        <h1 className="text-white text-5xl font-semibold mb-12">ImageAI</h1>
 
         <div className="border-x border-y border-neutral-500 rounded-lg p-10 background">
           {loading && <p className="text-white">Loading...</p>}
